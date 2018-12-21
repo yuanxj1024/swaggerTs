@@ -1,0 +1,27 @@
+{
+  "name": "swaggerts",
+  "version": "1.0.0",
+  "description": "swagger typescript interfaces",
+  "main": "src/index.js",
+  "bin": {
+    "swaggerTs": "./bin/swaggerTs.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "swagger",
+    "typescript",
+    "interfaces"
+  ],
+  "author": "lebang",
+  "license": "MIT",
+  "dependencies": {
+    "download": "^7.1.0",
+    "fs-extra": "^7.0.1",
+    "json-format": "^1.0.1",
+    "json-schema-ref-parser": "^6.0.2",
+    "json-schema-to-typescript": "^6.1.0",
+    "swagger-parser": "^6.0.2"
+  }
+}
