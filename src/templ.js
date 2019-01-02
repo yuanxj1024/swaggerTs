@@ -98,7 +98,10 @@ function getApiList(apiList) {
 }
 
 function getJsonSchema(json) {
-  return apiPath.replace('**pathList**', JSON.stringify(handleData(json)));
+  return apiPath.replace(
+    '**pathList**',
+    JSON.stringify(handleData(json)['paths'])
+  );
 }
 
 module.exports = {
