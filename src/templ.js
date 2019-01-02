@@ -16,6 +16,17 @@ const apiMain = `
   export const api = new Api();
 `;
 
+const apiPath = `
+  /* tslint:disable */
+
+  export interface Api {
+    [propsName: string]: any;
+  }
+
+  const apiPaths: Api = **pathList**;
+  export { apiPaths };
+`;
+
 const getApiItem = (url, type) => {
   const versionStamp = /v\d\//;
   const fnName = url
@@ -34,6 +45,49 @@ const getApiItem = (url, type) => {
   `;
 };
 
+function handleProp(obj) {
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      if (key === 'enum' || key === 'description') {
+        delete obj[key];
+      }
+      if (key === 'required' && Array.isArray(obj[key])) {
+        obj.requiredArr = obj[key];
+        delete obj[key];
+      }
+      if (typeof obj[key] === 'object') {
+        handleProp(obj[key]);
+      }
+    }
+  }
+}
+
+function handleRequired(obj) {
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      if (obj.requiredArr && Array.isArray(obj.requiredArr)) {
+        obj.requiredArr.forEach(prop => {
+          if (obj.properties && obj.properties[prop]) {
+            obj.properties[prop].required = true;
+          }
+        });
+      }
+      if (typeof obj[key] === 'object') {
+        handleRequired(obj[key]);
+      }
+    }
+  }
+}
+
+function handleData(obj) {
+  if (!obj) {
+    return obj;
+  }
+  handleProp(obj);
+  handleRequired(obj);
+  return obj;
+}
+
 function getApiList(apiList) {
   let templ = '';
   for (let i = 0; i < apiList.length; i++) {
@@ -43,7 +97,12 @@ function getApiList(apiList) {
   return apiMain.replace('**apiList**', templ);
 }
 
+function getJsonSchema(json) {
+  return apiPath.replace('**pathList**', JSON.stringify(handleData(json)));
+}
+
 module.exports = {
   apiType,
-  getApiList
+  getApiList,
+  getJsonSchema
 };

@@ -65,8 +65,33 @@ function handleDefinitions(definitions) {
   return definitions;
 }
 
+function getJsonSchema(api) {
+  let pathList = api['paths'];
+
+  let pathObj = {};
+  for (let key in pathList) {
+    if (pathList.hasOwnProperty(key)) {
+      let element = pathList[key];
+      pathObj[key] = {};
+      if (element['post']['parameters']) {
+        pathObj[key]['parameters'] = handleParameters(
+          element['post']['parameters'],
+          key,
+          false
+        );
+      }
+      if (element['post']['responses']) {
+        pathObj[key]['responses'] =
+          element['post']['responses']['200']['schema'];
+      }
+    }
+  }
+  return pathObj;
+}
+
 module.exports = {
   handleDefinitions,
   handlePaths,
-  firstUpperCase
+  firstUpperCase,
+  getJsonSchema
 };

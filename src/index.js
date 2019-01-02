@@ -2,6 +2,7 @@ const fs = require('fs-extra');
 const download = require('download');
 const readline = require('readline');
 const jsonToTs = require('json-schema-to-typescript');
+const refParse = require('json-schema-ref-parser');
 const util = require('./util');
 const templ = require('./templ');
 
@@ -12,14 +13,30 @@ let swaggerConf = {
 
 const confFile = '.swagger.conf';
 const swaggerFile = 'swagger.json';
-const apiListFile = './api-list.ts';
+const apiListFile = './api.ts';
 const apiTypeFile = './api-type.ts';
 const apiTypingsFile = './api-typings.ts';
+const apiPathFile = './api-paths.ts';
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
+
+const writeJsonSchema = api => {
+  const pathObj = util.getJsonSchema(api);
+  const defs = api['definitions'];
+
+  refParse.dereference(
+    {
+      definitions: { ...defs },
+      paths: { ...pathObj }
+    },
+    (err, json) => {
+      fs.writeFileSync(apiPathFile, templ.getJsonSchema(json));
+    }
+  );
+};
 
 const getSwaggerApi = () => {
   return new Promise((resolve, reject) => {
@@ -56,16 +73,19 @@ getSwaggerApi()
   })
   .then(api => {
     console.log('--- 编译中 ---');
-    let pathList = [];
+    let apiList = [];
     for (const key in api.paths) {
-      pathList.push({
+      apiList.push({
         url: key,
         type: api.paths[key].post ? 'post' : 'get'
       });
     }
     if (!fs.existsSync(apiListFile)) {
-      fs.outputFileSync(apiListFile, templ.getApiList(pathList));
+      fs.outputFileSync(apiListFile, templ.getApiList(apiList));
     }
+
+    writeJsonSchema(api);
+
     return jsonToTs.compile(
       {
         title: 'rootList',
