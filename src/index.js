@@ -23,21 +23,6 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-const writeJsonSchema = api => {
-  const pathObj = util.getJsonSchema(api);
-  const defs = api['definitions'];
-
-  refParse.dereference(
-    {
-      definitions: { ...defs },
-      paths: { ...pathObj }
-    },
-    (err, json) => {
-      fs.writeFileSync(apiPathFile, templ.getJsonSchema(json));
-    }
-  );
-};
-
 const getSwaggerApi = () => {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(confFile)) {
@@ -52,6 +37,37 @@ const getSwaggerApi = () => {
     swaggerConf.url = conf.url;
     resolve(swaggerConf.url);
   });
+};
+
+const writeJsonSchema = api => {
+  return new Promise((resolve, reject) => {
+    const pathObj = util.getJsonSchema(api);
+    const defs = api['definitions'];
+
+    refParse.dereference(
+      {
+        definitions: { ...defs },
+        paths: { ...pathObj }
+      },
+      (err, json) => {
+        fs.writeFileSync(apiPathFile, templ.getJsonSchema(json));
+        resolve();
+      }
+    );
+  });
+};
+
+const writeApiList = paths => {
+  let apiList = [];
+  for (const key in paths) {
+    apiList.push({
+      url: key,
+      type: paths[key].post ? 'post' : 'get'
+    });
+  }
+  if (!fs.existsSync(apiListFile)) {
+    fs.outputFileSync(apiListFile, templ.getApiList(apiList));
+  }
 };
 
 function rlResolve(resolve) {
@@ -73,19 +89,13 @@ getSwaggerApi()
   })
   .then(api => {
     console.log('--- 编译中 ---');
-    let apiList = [];
-    for (const key in api.paths) {
-      apiList.push({
-        url: key,
-        type: api.paths[key].post ? 'post' : 'get'
-      });
-    }
-    if (!fs.existsSync(apiListFile)) {
-      fs.outputFileSync(apiListFile, templ.getApiList(apiList));
-    }
 
+    writeApiList(api['paths']);
     writeJsonSchema(api);
 
+    return api;
+  })
+  .then(api => {
     return jsonToTs.compile(
       {
         title: 'rootList',
