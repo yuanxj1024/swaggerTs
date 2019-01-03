@@ -40,21 +40,18 @@ const getSwaggerApi = () => {
 };
 
 const writeJsonSchema = api => {
-  return new Promise((resolve, reject) => {
-    const pathObj = util.getJsonSchema(api);
-    const defs = api['definitions'];
+  const pathObj = util.getJsonSchema(api);
+  const defs = api['definitions'];
 
-    refParse.dereference(
-      {
-        definitions: { ...defs },
-        paths: { ...pathObj }
-      },
-      (err, json) => {
-        fs.writeFileSync(apiPathFile, templ.getJsonSchema(json));
-        resolve();
-      }
-    );
-  });
+  refParse.dereference(
+    {
+      definitions: { ...defs },
+      paths: { ...pathObj }
+    },
+    (err, json) => {
+      fs.writeFileSync(apiPathFile, templ.getJsonSchema(json));
+    }
+  );
 };
 
 const writeApiList = paths => {
